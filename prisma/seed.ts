@@ -7,30 +7,23 @@ async function main() {
   const categories = await Promise.all([
     prisma.category.create({
       data: {
+        name: 'Main Courses',
+        description: 'Delicious main dishes',
+        image: '/logo.jfif'
+      }
+    }),
+    prisma.category.create({
+      data: {
+        name: 'Popular',
+        description: 'Our most loved dishes',
+        image: '/logo.jfif'
+      }
+    }),
+    prisma.category.create({
+      data: {
         name: 'Grilled',
         description: 'Fresh grilled chicken dishes',
-        image: '/images/categories/grilled.jpg'
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Curry',
-        description: 'Rich and flavorful curry dishes',
-        image: '/images/categories/curry.jpg'
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Wraps',
-        description: 'Delicious wraps and sandwiches',
-        image: '/images/categories/wraps.jpg'
-      }
-    }),
-    prisma.category.create({
-      data: {
-        name: 'Sides',
-        description: 'Perfect accompaniments',
-        image: '/images/categories/sides.jpg'
+        image: '/logo.jfif'
       }
     })
   ])
@@ -40,76 +33,72 @@ async function main() {
     prisma.menuItem.create({
       data: {
         name: 'Grilled Chicken Breast',
-        description: 'Tender grilled chicken breast marinated with herbs and spices',
+        description: 'Tender grilled chicken breast marinated with herbs and spices, served with fresh vegetables and your choice of sauce.',
         price: 12.99,
         categoryId: categories[0].id,
         isPopular: true,
-        image: '/images/menu/grilled-breast.jpg'
+        image: '/grilling.jfif'
       }
     }),
     prisma.menuItem.create({
       data: {
         name: 'Chicken Shawarma',
-        description: 'Traditional shawarma with fresh vegetables and garlic sauce',
+        description: 'Traditional shawarma with tender chicken, fresh vegetables, and our signature garlic sauce wrapped in warm pita bread.',
         price: 8.99,
-        categoryId: categories[2].id,
+        categoryId: categories[0].id,
         isPopular: true,
-        image: '/images/menu/shawarma.jpg'
+        image: '/shawarma.jfif'
       }
     }),
     prisma.menuItem.create({
       data: {
         name: 'Chicken Biryani',
-        description: 'Fragrant basmati rice with tender chicken and aromatic spices',
+        description: 'Fragrant basmati rice cooked with tender chicken and aromatic spices, served with raita and pickled onions.',
         price: 15.99,
-        categoryId: categories[1].id,
-        isPopular: true,
-        image: '/images/menu/biryani.jpg'
+        categoryId: categories[0].id,
+        isPopular: false,
+        image: '/bryani.jfif'
       }
     }),
     prisma.menuItem.create({
       data: {
         name: 'Chicken Kebab',
-        description: 'Skewered chicken with grilled vegetables and special marinade',
+        description: 'Skewered chicken marinated in herbs and spices, grilled to perfection and served with grilled vegetables.',
         price: 10.99,
         categoryId: categories[0].id,
-        image: '/images/menu/kebab.jpg'
+        isPopular: false,
+        image: '/kebab.jfif'
+      }
+    }),
+    // Adding 3 more food items
+    prisma.menuItem.create({
+      data: {
+        name: 'Chicken Burger',
+        description: 'Juicy grilled chicken patty with fresh lettuce, tomatoes, and special sauce in a soft bun.',
+        price: 9.99,
+        categoryId: categories[0].id,
+        isPopular: true,
+        image: '/hamburger.jfif'
       }
     }),
     prisma.menuItem.create({
       data: {
-        name: 'Chicken Curry',
-        description: 'Rich and creamy curry with tender chicken pieces',
-        price: 13.99,
-        categoryId: categories[1].id,
-        image: '/images/menu/curry.jpg'
+        name: 'Chicken Hot Dog',
+        description: 'Grilled chicken sausage with onions, mustard, and ketchup in a fresh bun.',
+        price: 6.99,
+        categoryId: categories[0].id,
+        isPopular: false,
+        image: '/hotdog.jfif'
       }
     }),
     prisma.menuItem.create({
       data: {
-        name: 'Chicken Wrap',
-        description: 'Fresh wrap with grilled chicken, lettuce, and special sauce',
+        name: 'Subway Style Chicken',
+        description: 'Fresh chicken sandwich with your choice of vegetables and sauces, just like Subway!',
         price: 7.99,
-        categoryId: categories[2].id,
-        image: '/images/menu/wrap.jpg'
-      }
-    }),
-    prisma.menuItem.create({
-      data: {
-        name: 'French Fries',
-        description: 'Crispy golden fries seasoned with herbs',
-        price: 3.99,
-        categoryId: categories[3].id,
-        image: '/images/menu/fries.jpg'
-      }
-    }),
-    prisma.menuItem.create({
-      data: {
-        name: 'Steamed Rice',
-        description: 'Perfectly steamed basmati rice',
-        price: 2.99,
-        categoryId: categories[3].id,
-        image: '/images/menu/rice.jpg'
+        categoryId: categories[0].id,
+        isPopular: true,
+        image: '/Subway.jfif'
       }
     })
   ])

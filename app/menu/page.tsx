@@ -1,62 +1,37 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ShoppingCart, Star, Clock, Heart } from 'lucide-react'
+import { useOrderBasket } from '../../components/OrderBasketContext'
 
 export default function Menu() {
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const { addItem } = useOrderBasket()
+  const [menuItems, setMenuItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const menuItems = [
-    {
-      id: 1,
-      name: "Grilled Chicken Breast",
-      description: "Tender grilled chicken breast marinated with herbs and spices, served with fresh vegetables and your choice of sauce.",
-      price: "12.99",
-      category: "main",
-      image: "/grilling.jfif",
-      prepTime: "15-20 min",
-      rating: 4.8,
-      popular: true
-    },
-    {
-      id: 2,
-      name: "Chicken Shawarma",
-      description: "Traditional shawarma with tender chicken, fresh vegetables, and our signature garlic sauce wrapped in warm pita bread.",
-      price: "8.99",
-      category: "main",
-      image: "/shawarma.jfif",
-      prepTime: "10-15 min",
-      rating: 4.9,
-      popular: true
-    },
-    {
-      id: 3,
-      name: "Chicken Biryani",
-      description: "Fragrant basmati rice cooked with tender chicken and aromatic spices, served with raita and pickled onions.",
-      price: "15.99",
-      category: "main",
-      image: "/bryani.jfif",
-      prepTime: "20-25 min",
-      rating: 4.7,
-      popular: false
-    },
-    {
-      id: 4,
-      name: "Chicken Kebab",
-      description: "Skewered chicken marinated in herbs and spices, grilled to perfection and served with grilled vegetables.",
-      price: "10.99",
-      category: "main",
-      image: "/kebab.jfif",
-      prepTime: "12-18 min",
-      rating: 4.6,
-      popular: false
-    }
-  ]
+  useEffect(() => {
+    setLoading(true)
+    fetch('/api/menu')
+      .then(res => res.json())
+      .then(data => {
+        setMenuItems(Array.isArray(data) ? data : [])
+        setLoading(false)
+      })
+      .catch(() => {
+        setError('Failed to load menu items.')
+        setLoading(false)
+      })
+  }, [])
 
-  const filteredItems = selectedCategory === 'all' 
-    ? menuItems 
-    : menuItems.filter(item => item.category === selectedCategory)
+  const filteredItems =
+    selectedCategory === 'all'
+      ? menuItems
+      : selectedCategory === 'main'
+        ? menuItems.filter(item => item.isPopular).slice(0, 3)
+        : menuItems;
 
   return (
     <div className="min-h-screen font-sans bg-gray-50">
@@ -112,21 +87,23 @@ export default function Menu() {
       {/* Menu Items */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredItems.map((item, index) => (
+          {loading && <div>Loading menu...</div>}
+          {error && <div className="text-red-500">{error}</div>}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.isArray(filteredItems) && filteredItems.map((item, index) => (
               <div 
                 key={item.id} 
-                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 animate-slideUp"
+                className="bg-white rounded-xl shadow-2xl overflow-hidden hover:scale-105 transition-transform duration-300 hover:shadow-3xl"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 {/* Item Image */}
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={item.image}
+                    src={item.image || '/logo.jfif'}
                     alt={item.name}
                     className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
                   />
-                  {item.popular && (
+                  {item.isPopular && (
                     <div className="absolute top-3 left-3 bg-secondary-300 text-white px-3 py-1 rounded-full text-sm font-bold">
                       Popular
                     </div>
@@ -145,22 +122,29 @@ export default function Menu() {
                   
                   <p className="text-gray-600 mb-4 line-clamp-2">{item.description}</p>
                   
-                  {/* Rating and Prep Time */}
+                  {/* Rating and Prep Time (optional, if available) */}
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm text-gray-600">{item.rating}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">{item.prepTime}</span>
-                    </div>
+                    {item.rating && (
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="text-sm text-gray-600">{item.rating}</span>
+                      </div>
+                    )}
+                    {item.prepTime && (
+                      <div className="flex items-center space-x-1">
+                        <Clock className="w-5 h-5 text-gray-400" />
+                        <span className="text-sm text-gray-600">{item.prepTime}</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Add to Cart Button */}
-                  <button className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2">
+                  {/* Add to Order Button */}
+                  <button
+                    className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors flex items-center justify-center space-x-2"
+                    onClick={() => addItem({ id: item.id, name: item.name, price: Number(item.price), image: item.image })}
+                  >
                     <ShoppingCart className="w-5 h-5" />
-                    <span>Add to Cart</span>
+                    <span>Add to Order</span>
                   </button>
                 </div>
               </div>

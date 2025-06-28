@@ -1,8 +1,11 @@
+"use client";
 import React from 'react'
 import Link from 'next/link'
 import { ShoppingCart, MapPin, Clock, Star } from 'lucide-react'
+import { useOrderBasket } from '../components/OrderBasketContext';
 
 export default function Home() {
+  const { addItem } = useOrderBasket();
   return (
     <div className="min-h-screen font-sans bg-gray-50">
       {/* Hero Section */}
@@ -84,7 +87,13 @@ export default function Home() {
                 <p className="text-gray-600 text-sm mb-3">{item.description}</p>
                 <div className="flex justify-between items-center">
                   <span className="text-primary-600 font-bold">${item.price}</span>
-                  <button className="btn-primary text-sm">Add to Cart</button>
+                  <button
+                    type="button"
+                    className="btn-primary text-sm"
+                    onClick={() => addItem({ id: String(item.id), name: item.name, price: Number(item.price), image: item.image })}
+                  >
+                    Add to Cart
+                  </button>
                 </div>
               </div>
             ))}

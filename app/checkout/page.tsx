@@ -1,11 +1,14 @@
+
 'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MapPin, Clock, CreditCard, Truck } from 'lucide-react'
+import { useOrderBasket } from '../../components/OrderBasketContext'
 
 export default function CheckoutPage() {
   const router = useRouter()
+  const { items: cartItems, total: basketTotal, clearBasket, removeItem } = useOrderBasket()
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -15,14 +18,8 @@ export default function CheckoutPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Mock cart data - in real app this would come from context/state
-  const cartItems = [
-    { id: '1', name: 'Grilled Chicken Breast', price: 12.99, quantity: 2 },
-    { id: '2', name: 'Chicken Shawarma', price: 8.99, quantity: 1 }
-  ]
-
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  const deliveryFee = 2.99
+  const deliveryFee = cartItems.length > 0 ? 2.99 : 0
   const total = subtotal + deliveryFee
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,7 +27,6 @@ export default function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
-      // In real app, this would create the order via API
       const orderData = {
         items: cartItems.map(item => ({
           menuItemId: item.id,
@@ -40,14 +36,23 @@ export default function CheckoutPage() {
         deliveryAddress: formData.address,
         deliveryInstructions: formData.instructions,
         totalAmount: total,
-        paymentMethod: formData.paymentMethod
+        paymentMethod: formData.paymentMethod,
+        name: formData.name,
+        phone: formData.phone
       }
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Send order to backend
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      })
+      if (!res.ok) throw new Error('Failed to create order')
+      const result = await res.json()
 
-      // Redirect to order confirmation
-      router.push('/order-confirmation?orderId=12345')
+      clearBasket()
+      // Redirect to order confirmation with real order ID
+      router.push(`/order-confirmation?orderId=${result.id}`)
     } catch (error) {
       console.error('Error creating order:', error)
       alert('Failed to create order. Please try again.')
@@ -68,13 +73,24 @@ export default function CheckoutPage() {
               <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
               
               <div className="space-y-3 mb-6">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center">
+                {cartItems.length === 0 ? (
+                  <p className="text-gray-500">Your order basket is empty.</p>
+                ) : cartItems.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center gap-2">
                     <div>
                       <p className="font-medium">{item.name}</p>
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     </div>
-                    <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                      <button
+                        type="button"
+                        onClick={() => removeItem(item.id)}
+                        className="ml-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-xs"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -202,38 +218,15 @@ export default function CheckoutPage() {
                     />
                     <span>Credit/Debit Card</span>
                   </label>
-                  
-                  <label className="flex items-center space-x-3 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="mobile"
-                      checked={formData.paymentMethod === 'mobile'}
-                      onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})}
-                      className="text-primary-600"
-                    />
-                    <span>Mobile Money</span>
-                  </label>
                 </div>
               </div>
 
-              {/* Place Order Button */}
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full btn-primary text-lg py-3 flex items-center justify-center space-x-2 disabled:opacity-50"
+                className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors text-lg flex items-center justify-center"
+                disabled={isSubmitting || cartItems.length === 0}
               >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Truck className="w-5 h-5" />
-                    <span>Place Order - ${total.toFixed(2)}</span>
-                  </>
-                )}
+                {isSubmitting ? 'Placing Order...' : 'Place Order'}
               </button>
             </form>
           </div>
